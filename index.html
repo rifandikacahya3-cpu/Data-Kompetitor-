@@ -91,6 +91,7 @@ td.n,th.n{text-align:right}
     <div><label for="pin">Kode akses</label><input type="password" id="pin"></div>
     <div><label for="fm">Bulan</label><select id="fm"><option value="">Semua bulan</option></select></div>
     <div><label for="fa">ARM / FT</label><select id="fa"></select></div>
+    <div><label for="fr">Kategori / Area</label><select id="fr"></select></div>
     <button class="sm" id="load">Muat data</button>
   </div>
   <div class="msg" id="dmsg" role="status"></div>
@@ -98,7 +99,7 @@ td.n,th.n{text-align:right}
     <div class="box">
       <label for="xl">Upload Excel pencapaian SO promotor realme</label>
       <div class="row"><div><input type="file" id="xl" accept=".xlsx,.xls,.csv"></div><button class="sm" id="up">Update ke website</button></div>
-      <p class="hint">Header kolom: ARM / FT NAME, SA NAME, SA PERSONAL CODE, STORE CODE, STORE NAME, SO. Upload baru akan menimpa data lama dan memperbarui pilihan nama di form.</p>
+      <p class="hint">Header kolom: ARM / FT NAME, SA NAME, SA PERSONAL CODE, STORE CODE, STORE NAME, AREA (kategori seperti TRADI - BANDUNG), SO. Upload baru akan menimpa data lama dan memperbarui pilihan nama di form.</p>
       <div class="msg" id="umsg" role="status"></div>
     </div>
     <div class="kpis" id="kpis"></div>
@@ -119,11 +120,13 @@ td.n,th.n{text-align:right}
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbx51Qi6PzFHPB4XY5etEAsy4EchsqNlP1pCiSRATXGsDeTKppxZpycHK7fNKDCHxEJe/exec";
-const ARMS = ["Rifandika Cahya","Lusi Monalisa","Dede Iskandar","Muhammad Gilang","Babay Rohman","Robi Nugroho","Ardy Yulianto","Olga Rafinska"];
+const ARMS = ["ARDY YULIANTO","BABAY ROHMAN","DEDE ISKANDAR","DIMAS SUHARRIZAL","LUSI MONALISA TAMBUNAN","MOHAMMAD GILANG ALVIAN","OLGA RAFINSKA DIRGANTARA","RIFANDIKA CAHYA","ROBI NUGROHO"];
+const AREAS = ["TRADI - TANGERANG","TRADI - SJDB","TRADI - SERANG BANTEN","TRADI - PRIANGAN TIMUR","TRADI - JKT NW","TRADI - CIREBON","TRADI - BIG KARAWANG","TRADI - BEKASI JAKTIM","TRADI - BANDUNG","MC - TANGERANG","MC - PRIANGAN TIMUR","MC - KARAWANG","MC - JSDB","MC - JNW","MC - JBC","MC - CIREBON","MC - BANTEN","MC - BANDUNG"];
 const BR = [["realme","#FFC915"],["OPPO","#1E8E5A"],["VIVO","#3B6CF6"],["XIAOMI","#FF6900"],["SAMSUNG","#1428A0"],["Infinix","#7B3FE4"],["Tecno","#0BB5C9"]];
 const $ = id => document.getElementById(id);
 const key = b => b.toLowerCase();
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ak = s => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 const norm = s => String(s || "").trim().toLowerCase();
 const num = v => +v || 0;
 const fmt = (v, d = 0) => Number(v).toLocaleString("id-ID", {maximumFractionDigits: d});
@@ -204,13 +207,17 @@ $("load").onclick = async () => {
   say("dmsg", ""); $("dash").classList.remove("hide"); render();
 };
 $("fa").innerHTML = '<option value="">Semua ARM</option>' + ARMS.map(a => `<option>${a}</option>`).join("");
-$("fm").onchange = render; $("fa").onchange = render;
+$("fr").innerHTML = '<option value="">Semua kategori</option>' + AREAS.map(a => `<option>${a}</option>`).join("");
+$("fm").onchange = render; $("fa").onchange = render; $("fr").onchange = render;
 
 function render(){
   const m = $("fm").value;
-  const fa = norm($("fa").value);
-  const all = DATA.filter(r => (!m || String(r.month).slice(0, 7) === m) && (!fa || norm(r.arm) === fa));
-  const RSf = RS.filter(r => !fa || norm(r.arm) === fa);
+  const fa = norm($("fa").value), fr = ak($("fr").value);
+  const RM = {}; RS.forEach(r => RM[String(r.code)] = r);
+  const okR = r => (!fa || norm(r.arm) === fa) && (!fr || ak(r.area) === fr);
+  const all = DATA.filter(r => { const x = RM[String(r.code)] || {};
+    return (!m || String(r.month).slice(0, 7) === m) && okR({arm: x.arm || r.arm, area: x.area}); });
+  const RSf = RS.filter(okR);
   // ambil laporan terbaru per SA per bulan (SO = akumulasi bulan berjalan)
   const mp = {};
   all.forEach(r => { const k = r.code + "|" + r.month; if(!mp[k] || new Date(r.timestamp) > new Date(mp[k].timestamp)) mp[k] = r; });
@@ -278,6 +285,7 @@ $("up").onclick = async () => {
       code: String(pick(r, n => n.includes("personalcode") || n === "sacode")).trim(),
       store_code: String(pick(r, n => n.includes("storecode"))).trim(),
       store: String(pick(r, n => n.includes("storename"))).trim(),
+      area: String(pick(r, n => n.includes("area") || n.includes("kategori") || n.includes("category") || n.includes("region"))).trim(),
       so: num(String(pick(r, n => n === "so" || n.includes("achiev") || n.includes("sellout") || n.includes("totalso"))).replace(/[^0-9.-]/g, ""))
     })).filter(r => r.code || r.sa);
     if(!rows.length) return say("umsg", "Kolom tidak terbaca. Cek nama header di Excel.", 1);
