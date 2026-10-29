@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>realme Competitor Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--y:#FFC915;--k:#111;--bg:#fff;--card:#f5f5f2;--tx:#111;--mut:#6b6b66;--ln:#e3e3dc}
+@media(prefers-color-scheme:dark){:root{--bg:#141414;--card:#1f1f1f;--tx:#f4f4f0;--mut:#9a9a94;--ln:#333}}
+*{box-sizing:border-box}
+body{margin:0;font-family:Sora,system-ui,sans-serif;background:var(--bg);color:var(--tx);line-height:1.5}
+header{background:var(--y);color:#111;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:26px;letter-spacing:-1px}
+.logo i{font-style:normal;background:#111;color:var(--y);padding:0 6px;border-radius:6px;margin-right:2px}
+nav button{font:600 14px Sora;border:2px solid #111;background:transparent;color:#111;padding:8px 18px;border-radius:99px;cursor:pointer;margin-left:6px}
+nav button.on{background:#111;color:var(--y)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #111;outline-offset:2px}
+.hero{background:var(--k);color:#fff;padding:36px 20px 44px}
+.hero h1{margin:0;font-size:clamp(28px,6vw,52px);font-weight:800;letter-spacing:-1.5px;line-height:1.05;max-width:720px}
+.hero h1 b{color:var(--y)}
+.hero p{color:#bbb;max-width:520px;margin:12px 0 0}
+main{max-width:1040px;margin:-24px auto 60px;padding:0 16px}
+section{background:var(--bg);border:1px solid var(--ln);border-radius:20px;padding:24px}
+.hide{display:none}
+h2{margin:0 0 14px;font-size:19px}
+h2.s{margin-top:28px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+input,select{width:100%;font:400 15px Sora;padding:11px 12px;border:1.5px solid var(--ln);border-radius:12px;background:var(--card);color:var(--tx)}
+input[readonly]{opacity:.75}
+input:focus,select:focus{border-color:var(--y)}
+.brand{border:1.5px solid var(--ln);border-radius:16px;padding:14px;margin-top:12px;background:var(--card)}
+.brand h3{margin:0 0 10px;font-size:15px;display:flex;align-items:center;gap:8px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.go{width:100%;margin-top:22px;font:800 16px Sora;background:var(--y);color:#111;border:0;border-radius:14px;padding:15px;cursor:pointer}
+.go:disabled{opacity:.6}
+.msg{margin-top:12px;font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0}
+.kpi{background:var(--card);border-radius:14px;padding:12px 14px;border-left:6px solid}
+.kpi small{color:var(--mut)}.kpi b{display:block;font-size:24px;letter-spacing:-1px}
+.bar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px}
+.bar span:first-child{width:70px;font-weight:600}
+.bar div{height:22px;border-radius:6px;min-width:2px}
+.bars{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}
+th,td{padding:8px 10px;border-bottom:1px solid var(--ln);text-align:left}
+th{background:var(--card)}
+td.n,th.n{text-align:right}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.row>div{flex:1;min-width:150px}
+.sm{font:600 13px Sora;padding:11px 16px;border-radius:12px;border:0;background:var(--k);color:var(--y);cursor:pointer}
+.box{background:var(--card);border-radius:14px;padding:14px;margin-top:16px}
+.hint{color:var(--mut);font-size:12px;margin:6px 0 0}
+@media(max-width:640px){.g2,.bars{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><i>real</i>me</div>
+  <nav><button id="t1" class="on">Input Data</button><button id="t2">Dashboard</button></nav>
+</header>
+<div class="hero">
+  <h1>Pantau kompetitor, <b>menangkan toko.</b></h1>
+  <p>Promotor isi jumlah promotor dan SO semua brand. Tim realme langsung lihat perbandingannya.</p>
+</div>
+
+<main>
+<section id="v1">
+  <h2>Form rekap harian</h2>
+  <div class="g2">
+    <div><label for="month">Bulan</label><input type="month" id="month"></div>
+    <div><label for="arm">Nama ARM / FT</label><select id="arm"></select></div>
+    <div><label for="sa">Nama SA</label><select id="sa"></select></div>
+    <div><label for="code">SA Personal Code</label><input id="code" readonly></div>
+    <div><label for="scode">Store Code</label><input id="scode" readonly></div>
+    <div><label for="store">Nama Toko</label><input id="store" readonly></div>
+  </div>
+  <div id="brands"></div>
+  <button class="go" id="send">Kirim data</button>
+  <p class="hint">Setiap SA hanya bisa mengirim 1 kali per hari. SO diisi akumulasi bulan berjalan. Data realme terisi otomatis dari Excel pencapaian, tidak perlu diisi.</p>
+  <div class="msg" id="msg" role="status"></div>
+</section>
+
+<section id="v2" class="hide">
+  <h2>Dashboard kompetitor</h2>
+  <div class="row">
+    <div><label for="pin">Kode akses</label><input type="password" id="pin"></div>
+    <div><label for="fm">Bulan</label><select id="fm"><option value="">Semua bulan</option></select></div>
+    <div><label for="fa">ARM / FT</label><select id="fa"></select></div>
+    <button class="sm" id="load">Muat data</button>
+  </div>
+  <div class="msg" id="dmsg" role="status"></div>
+  <div id="dash" class="hide">
+    <div class="box">
+      <label for="xl">Upload Excel pencapaian SO promotor realme</label>
+      <div class="row"><div><input type="file" id="xl" accept=".xlsx,.xls,.csv"></div><button class="sm" id="up">Update ke website</button></div>
+      <p class="hint">Header kolom: ARM / FT NAME, SA NAME, SA PERSONAL CODE, STORE CODE, STORE NAME, SO. Upload baru akan menimpa data lama dan memperbarui pilihan nama di form.</p>
+      <div class="msg" id="umsg" role="status"></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="bars">
+      <div><h2>Total SO per brand</h2><div id="b1"></div></div>
+      <div><h2>Productivity (SO / promotor)</h2><div id="b2"></div></div>
+    </div>
+    <h2 class="s">Perbandingan brand</h2>
+    <div class="tw"><table id="tbb"></table></div>
+    <h2 class="s">Perbandingan SO per toko</h2>
+    <div class="tw"><table id="tbs"></table></div>
+    <h2 class="s">Semua laporan masuk</h2>
+    <div class="tw"><table id="tb"></table></div>
+    <button class="sm" id="csv" style="margin-top:14px">Unduh CSV</button>
+  </div>
+</section>
+</main>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbx51Qi6PzFHPB4XY5etEAsy4EchsqNlP1pCiSRATXGsDeTKppxZpycHK7fNKDCHxEJe/exec";
+const ARMS = ["Rifandika Cahya","Lusi Monalisa","Dede Iskandar","Muhammad Gilang","Babay Rohman","Robi Nugroho","Ardy Yulianto","Olga Rafinska"];
+const BR = [["realme","#FFC915"],["OPPO","#1E8E5A"],["VIVO","#3B6CF6"],["XIAOMI","#FF6900"],["SAMSUNG","#1428A0"],["Infinix","#7B3FE4"],["Tecno","#0BB5C9"]];
+const $ = id => document.getElementById(id);
+const key = b => b.toLowerCase();
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm = s => String(s || "").trim().toLowerCase();
+const num = v => +v || 0;
+const fmt = (v, d = 0) => Number(v).toLocaleString("id-ID", {maximumFractionDigits: d});
+function say(id, t, err){ const e = $(id); e.textContent = t; e.style.color = err ? "#d33" : "inherit"; }
+
+/* ---------- FORM ---------- */
+$("arm").innerHTML = '<option value="">Pilih ARM / FT</option>' + ARMS.map(a => `<option>${a}</option>`).join("");
+$("month").value = new Date().toISOString().slice(0, 7);
+$("brands").innerHTML = BR.slice(1).map(([n, c], i) => `
+ <div class="brand"><h3><span class="dot" style="background:${c}"></span>${i + 1}. ${n}</h3>
+ <div class="g2">
+  <div><label for="${key(n)}_sa">Jumlah Promotor</label><select id="${key(n)}_sa"><option value="">Pilih</option>${[1,2,3,4,5].map(x => `<option>${x}</option>`).join("")}</select></div>
+  <div><label for="${key(n)}_so">Jumlah SO</label><input type="number" min="0" step="1" inputmode="numeric" id="${key(n)}_so"></div>
+ </div></div>`).join("");
+
+let ROSTER = [];
+fetch(API_URL + "?action=roster").then(r => r.json()).then(j => { ROSTER = j.roster || []; fillSA(); })
+  .catch(() => say("msg", "Daftar SA gagal dimuat. Muat ulang halaman.", 1));
+
+function fillSA(){
+  const a = norm($("arm").value), hasArm = ROSTER.some(r => norm(r.arm));
+  const list = ROSTER.filter(r => !hasArm || norm(r.arm) === a);
+  $("sa").innerHTML = '<option value="">' + ($("arm").value ? (list.length ? "Pilih nama SA" : "Belum ada SA untuk ARM ini") : "Pilih ARM dulu") + "</option>" +
+    ($("arm").value ? list.map(r => `<option value="${esc(r.code)}">${esc(r.sa)}</option>`).join("") : "");
+  info();
+}
+function info(){
+  const r = ROSTER.find(x => String(x.code) === $("sa").value);
+  $("code").value = r ? r.code : ""; $("scode").value = r ? r.store_code : ""; $("store").value = r ? r.store : "";
+}
+$("arm").onchange = fillSA; $("sa").onchange = info; fillSA();
+
+const dkey = c => "done_" + c + "_" + new Date().toLocaleDateString("sv", {timeZone: "Asia/Jakarta"});
+$("send").onclick = async () => {
+  if(!$("month").value || !$("arm").value || !$("sa").value) return say("msg", "Pilih bulan, ARM dan nama SA dulu.", 1);
+  const code = $("code").value;
+  try { if(localStorage.getItem(dkey(code))) return say("msg", "SA ini sudah mengirim data hari ini. Silakan kirim lagi besok.", 1); } catch(e){}
+  const d = {month: $("month").value, arm: $("arm").value, sa: $("sa").selectedOptions[0].text, code, store_code: $("scode").value, store: $("store").value};
+  for(const [n] of BR.slice(1)){
+    const p = $(key(n) + "_sa").value, s = $(key(n) + "_so").value;
+    if(p === "" || s === "") return say("msg", "Isi Jumlah Promotor dan Jumlah SO untuk " + n + ".", 1);
+    d[key(n) + "_sa"] = +p; d[key(n) + "_so"] = +s;
+  }
+  $("send").disabled = true; say("msg", "Mengirim...");
+  try{
+    const r = await fetch(API_URL, {method: "POST", body: JSON.stringify(d)});
+    const j = await r.json();
+    if(j.error === "duplicate"){ try{localStorage.setItem(dkey(code), 1)}catch(e){}; say("msg", "SA ini sudah mengirim data hari ini. Silakan kirim lagi besok.", 1); }
+    else if(j.error) say("msg", "Data ditolak: " + j.error, 1);
+    else {
+      try{localStorage.setItem(dkey(code), 1)}catch(e){}
+      say("msg", "Data terkirim. Terima kasih!");
+      $("sa").value = ""; info(); BR.slice(1).forEach(([n]) => { $(key(n) + "_sa").value = ""; $(key(n) + "_so").value = ""; });
+    }
+  }catch(e){ say("msg", "Gagal mengirim. Cek koneksi, lalu coba lagi.", 1); }
+  $("send").disabled = false;
+};
+
+/* ---------- TAB ---------- */
+function tab(n){
+  $("v1").classList.toggle("hide", n !== 1); $("v2").classList.toggle("hide", n !== 2);
+  $("t1").classList.toggle("on", n === 1); $("t2").classList.toggle("on", n === 2);
+}
+$("t1").onclick = () => tab(1); $("t2").onclick = () => tab(2);
+
+/* ---------- DASHBOARD ---------- */
+let DATA = [], RS = [];
+$("load").onclick = async () => {
+  say("dmsg", "Memuat...");
+  try{
+    const r = await fetch(API_URL + "?key=" + encodeURIComponent($("pin").value));
+    const j = await r.json();
+    if(j.error) return say("dmsg", "Kode akses salah.", 1);
+    DATA = j.rows || []; RS = j.roster || [];
+  }catch(e){ return say("dmsg", "Gagal memuat data.", 1); }
+  const ms = [...new Set(DATA.map(r => String(r.month).slice(0, 7)))].sort().reverse(), cur = $("fm").value;
+  $("fm").innerHTML = '<option value="">Semua bulan</option>' + ms.map(m => `<option ${m === cur ? "selected" : ""}>${m}</option>`).join("");
+  say("dmsg", ""); $("dash").classList.remove("hide"); render();
+};
+$("fa").innerHTML = '<option value="">Semua ARM</option>' + ARMS.map(a => `<option>${a}</option>`).join("");
+$("fm").onchange = render; $("fa").onchange = render;
+
+function render(){
+  const m = $("fm").value;
+  const fa = norm($("fa").value);
+  const all = DATA.filter(r => (!m || String(r.month).slice(0, 7) === m) && (!fa || norm(r.arm) === fa));
+  const RSf = RS.filter(r => !fa || norm(r.arm) === fa);
+  // ambil laporan terbaru per SA per bulan (SO = akumulasi bulan berjalan)
+  const mp = {};
+  all.forEach(r => { const k = r.code + "|" + r.month; if(!mp[k] || new Date(r.timestamp) > new Date(mp[k].timestamp)) mp[k] = r; });
+  const rows = Object.values(mp);
+  const xlSO = RSf.reduce((s, r) => s + num(r.so), 0), hasX = xlSO > 0;
+  const XS = {}; RS.forEach(r => XS[String(r.code)] = num(r.so));
+
+  const st = BR.map(([n, c]) => {
+    const k = key(n), rl = k === "realme";
+    const pm = rl ? RSf.length : rows.reduce((s, r) => s + num(r[k + "_sa"]), 0);
+    const so = rl ? xlSO : rows.reduce((s, r) => s + num(r[k + "_so"]), 0);
+    return {n, c, pm, so, pd: pm ? so / pm : 0};
+  });
+  const rm = st[0];
+  $("kpis").innerHTML = [
+    ["Laporan masuk", all.length, "#111"], ["SA realme terdaftar", RSf.length, "#FFC915"],
+    ["SO realme (Excel)", fmt(rm.so), "#FFC915"], ["Productivity realme", fmt(rm.pd, 1), "#FFC915"]
+  ].map(([t, v, c]) => `<div class="kpi" style="border-color:${c}"><small>${t}</small><b>${v}</b></div>`).join("");
+
+  const bar = (k, d) => { const mx = Math.max(...st.map(s => s[k]), 1);
+    return st.map(s => `<div class="bar"><span>${s.n}</span><div style="width:${s[k] / mx * 60}%;background:${s.c}"></div><span style="width:auto">${fmt(s[k], d)}</span></div>`).join(""); };
+  $("b1").innerHTML = bar("so", 0); $("b2").innerHTML = bar("pd", 1);
+
+  $("tbb").innerHTML = "<tr><th>Brand</th><th class='n'>Jumlah promotor</th><th class='n'>Jumlah SO</th><th class='n'>Productivity</th><th class='n'>SO vs realme</th></tr>" +
+    st.map(s => `<tr><td><b>${s.n}</b>${s.n === "realme" ? " (dari Excel)" : ""}</td><td class="n">${fmt(s.pm)}</td><td class="n">${fmt(s.so)}</td><td class="n">${fmt(s.pd, 1)}</td><td class="n">${rm.so ? fmt(s.so / rm.so * 100, 0) + "%" : "-"}</td></tr>`).join("");
+
+  // per toko
+  const sm = {};
+  const g = (c, n) => { const k = c || n || "-"; return sm[k] || (sm[k] = {name: n || c || "-", rm: 0, b: {}}); };
+  RSf.forEach(r => { g(String(r.store_code), r.store).rm += num(r.so); });
+  rows.forEach(r => { const o = g(String(r.store_code), r.store);
+    BR.forEach(([n]) => { const k = key(n); if(k !== "realme") o.b[k] = (o.b[k] || 0) + num(r[k + "_so"]); }); });
+  const comp = BR.slice(1);
+  $("tbs").innerHTML = "<tr><th>Toko</th><th class='n'>realme</th>" + comp.map(([n]) => `<th class='n'>${n}</th>`).join("") + "<th class='n'>Share realme</th></tr>" +
+    Object.values(sm).sort((a, b) => b.rm - a.rm).map(o => {
+      const tot = o.rm + comp.reduce((s, [n]) => s + (o.b[key(n)] || 0), 0);
+      return `<tr><td>${esc(o.name)}</td><td class="n"><b>${fmt(o.rm)}</b></td>` + comp.map(([n]) => `<td class="n">${fmt(o.b[key(n)] || 0)}</td>`).join("") +
+        `<td class="n">${tot ? fmt(o.rm / tot * 100, 0) + "%" : "-"}</td></tr>`; }).join("");
+
+  const cell = (r, n) => `${r[key(n) + "_sa"]} / ${r[key(n) + "_so"]}`;
+  const head = ["Tanggal", "Bulan", "ARM/FT", "SA", "Kode", "Store Code", "Toko"];
+  $("tb").innerHTML = "<tr>" + head.concat(["realme SO (Excel)"], BR.slice(1).map(([n]) => n + " (Prom/SO)")).map(x => `<th>${x}</th>`).join("") + "</tr>" +
+    all.map(r => "<tr>" + [String(r.day).slice(0, 10), String(r.month).slice(0, 7), r.arm, r.sa, r.code, r.store_code, r.store, fmt(XS[String(r.code)] || 0), ...BR.slice(1).map(([n]) => cell(r, n))]
+      .map(x => `<td>${esc(x)}</td>`).join("") + "</tr>").join("");
+  $("csv").onclick = () => {
+    const h = [...head, "realme SO (Excel)", ...BR.slice(1).flatMap(([n]) => [n + " Promotor", n + " SO"])];
+    const t = [h, ...all.map(r => [String(r.day).slice(0, 10), String(r.month).slice(0, 7), r.arm, r.sa, r.code, r.store_code, r.store, XS[String(r.code)] || 0, ...BR.slice(1).flatMap(([n]) => [r[key(n) + "_sa"], r[key(n) + "_so"]])])]
+      .map(a => a.map(x => `"${String(x).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([t], {type: "text/csv"}));
+    a.download = "rekap-kompetitor.csv"; a.click();
+  };
+}
+
+/* ---------- UPLOAD EXCEL SO realme ---------- */
+const pick = (row, test) => { for(const k in row){ if(test(k.toLowerCase().replace(/[^a-z0-9]/g, ""))) return row[k]; } return ""; };
+$("up").onclick = async () => {
+  const f = $("xl").files[0];
+  if(!f) return say("umsg", "Pilih file Excel dulu.", 1);
+  try{
+    const wb = XLSX.read(await f.arrayBuffer());
+    const js = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: ""});
+    const rows = js.map(r => ({
+      arm: String(pick(r, n => n.includes("arm") || n.includes("ftname") || n === "ft")).trim(),
+      sa: String(pick(r, n => n.includes("saname") || n === "nama")).trim(),
+      code: String(pick(r, n => n.includes("personalcode") || n === "sacode")).trim(),
+      store_code: String(pick(r, n => n.includes("storecode"))).trim(),
+      store: String(pick(r, n => n.includes("storename"))).trim(),
+      so: num(String(pick(r, n => n === "so" || n.includes("achiev") || n.includes("sellout") || n.includes("totalso"))).replace(/[^0-9.-]/g, ""))
+    })).filter(r => r.code || r.sa);
+    if(!rows.length) return say("umsg", "Kolom tidak terbaca. Cek nama header di Excel.", 1);
+    say("umsg", "Mengunggah " + rows.length + " baris...");
+    const r = await fetch(API_URL, {method: "POST", body: JSON.stringify({action: "roster", key: $("pin").value, rows})});
+    const j = await r.json();
+    if(j.error) return say("umsg", "Gagal: kode akses salah.", 1);
+    say("umsg", j.n + " SA berhasil diperbarui."); $("load").click();
+  }catch(e){ say("umsg", "Gagal membaca atau mengunggah file.", 1); }
+};
+</script>
+</body>
+</html>
