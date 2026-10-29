@@ -78,6 +78,7 @@ td.n,th.n{text-align:right}
     <div><label for="code">SA Personal Code</label><input id="code" readonly></div>
     <div><label for="scode">Store Code</label><input id="scode" readonly></div>
     <div><label for="store">Nama Toko</label><input id="store" readonly></div>
+    <div><label for="stype">Tipe Toko</label><select id="stype"><option value="">Pilih tipe toko</option><option>TRADI</option><option>REALME STORE</option><option>MODERN CHANNEL</option></select></div>
   </div>
   <div id="brands"></div>
   <button class="go" id="send">Kirim data</button>
@@ -91,7 +92,7 @@ td.n,th.n{text-align:right}
     <div><label for="pin">Kode akses</label><input type="password" id="pin"></div>
     <div><label for="fm">Bulan</label><select id="fm"><option value="">Semua bulan</option></select></div>
     <div><label for="fa">ARM / FT</label><select id="fa"></select></div>
-    <div><label for="fr">Kategori / Area</label><select id="fr"></select></div>
+    <div><label for="fr">Tipe Toko</label><select id="fr"></select></div>
     <button class="sm" id="load">Muat data</button>
   </div>
   <div class="msg" id="dmsg" role="status"></div>
@@ -99,7 +100,7 @@ td.n,th.n{text-align:right}
     <div class="box">
       <label for="xl">Upload Excel pencapaian SO promotor realme</label>
       <div class="row"><div><input type="file" id="xl" accept=".xlsx,.xls,.csv"></div><button class="sm" id="up">Update ke website</button></div>
-      <p class="hint">Header kolom: ARM / FT NAME, SA NAME, SA PERSONAL CODE, STORE CODE, STORE NAME, AREA (kategori seperti TRADI - BANDUNG), SO. Upload baru akan menimpa data lama dan memperbarui pilihan nama di form.</p>
+      <p class="hint">Header kolom: ARM / FT NAME, SA NAME, SA PERSONAL CODE, STORE CODE, STORE NAME, STORE TYPE (isi: TRADI / REALME STORE / MODERN CHANNEL), SO. Upload baru akan menimpa data lama dan memperbarui pilihan nama di form.</p>
       <div class="msg" id="umsg" role="status"></div>
     </div>
     <div class="kpis" id="kpis"></div>
@@ -109,6 +110,8 @@ td.n,th.n{text-align:right}
     </div>
     <h2 class="s">Perbandingan brand</h2>
     <div class="tw"><table id="tbb"></table></div>
+    <h2 class="s">Ringkasan per tipe toko</h2>
+    <div class="tw"><table id="tba"></table></div>
     <h2 class="s">Perbandingan SO per toko</h2>
     <div class="tw"><table id="tbs"></table></div>
     <h2 class="s">Semua laporan masuk</h2>
@@ -121,7 +124,7 @@ td.n,th.n{text-align:right}
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbx51Qi6PzFHPB4XY5etEAsy4EchsqNlP1pCiSRATXGsDeTKppxZpycHK7fNKDCHxEJe/exec";
 const ARMS = ["ARDY YULIANTO","BABAY ROHMAN","DEDE ISKANDAR","DIMAS SUHARRIZAL","LUSI MONALISA TAMBUNAN","MOHAMMAD GILANG ALVIAN","OLGA RAFINSKA DIRGANTARA","RIFANDIKA CAHYA","ROBI NUGROHO"];
-const AREAS = ["TRADI - TANGERANG","TRADI - SJDB","TRADI - SERANG BANTEN","TRADI - PRIANGAN TIMUR","TRADI - JKT NW","TRADI - CIREBON","TRADI - BIG KARAWANG","TRADI - BEKASI JAKTIM","TRADI - BANDUNG","MC - TANGERANG","MC - PRIANGAN TIMUR","MC - KARAWANG","MC - JSDB","MC - JNW","MC - JBC","MC - CIREBON","MC - BANTEN","MC - BANDUNG"];
+const STYPES = ["TRADI","REALME STORE","MODERN CHANNEL"];
 const BR = [["realme","#FFC915"],["OPPO","#1E8E5A"],["VIVO","#3B6CF6"],["XIAOMI","#FF6900"],["SAMSUNG","#1428A0"],["Infinix","#7B3FE4"],["Tecno","#0BB5C9"]];
 const $ = id => document.getElementById(id);
 const key = b => b.toLowerCase();
@@ -155,16 +158,16 @@ function fillSA(){
 }
 function info(){
   const r = ROSTER.find(x => String(x.code) === $("sa").value);
-  $("code").value = r ? r.code : ""; $("scode").value = r ? r.store_code : ""; $("store").value = r ? r.store : "";
+  $("code").value = r ? r.code : ""; $("scode").value = r ? r.store_code : ""; $("store").value = r ? r.store : ""; $("stype").value = r ? (STYPES.find(t => ak(t) === ak(r.store_type)) || "") : "";
 }
 $("arm").onchange = fillSA; $("sa").onchange = info; fillSA();
 
 const dkey = c => "done_" + c + "_" + new Date().toLocaleDateString("sv", {timeZone: "Asia/Jakarta"});
 $("send").onclick = async () => {
-  if(!$("month").value || !$("arm").value || !$("sa").value) return say("msg", "Pilih bulan, ARM dan nama SA dulu.", 1);
+  if(!$("month").value || !$("arm").value || !$("sa").value || !$("stype").value) return say("msg", "Pilih bulan, ARM, nama SA dan tipe toko dulu.", 1);
   const code = $("code").value;
   try { if(localStorage.getItem(dkey(code))) return say("msg", "SA ini sudah mengirim data hari ini. Silakan kirim lagi besok.", 1); } catch(e){}
-  const d = {month: $("month").value, arm: $("arm").value, sa: $("sa").selectedOptions[0].text, code, store_code: $("scode").value, store: $("store").value};
+  const d = {month: $("month").value, arm: $("arm").value, sa: $("sa").selectedOptions[0].text, code, store_code: $("scode").value, store: $("store").value, store_type: $("stype").value};
   for(const [n] of BR.slice(1)){
     const p = $(key(n) + "_sa").value, s = $(key(n) + "_so").value;
     if(p === "" || s === "") return say("msg", "Isi Jumlah Promotor dan Jumlah SO untuk " + n + ".", 1);
@@ -207,21 +210,22 @@ $("load").onclick = async () => {
   say("dmsg", ""); $("dash").classList.remove("hide"); render();
 };
 $("fa").innerHTML = '<option value="">Semua ARM</option>' + ARMS.map(a => `<option>${a}</option>`).join("");
-$("fr").innerHTML = '<option value="">Semua kategori</option>' + AREAS.map(a => `<option>${a}</option>`).join("");
+$("fr").innerHTML = '<option value="">Semua tipe toko</option>' + STYPES.map(a => `<option>${a}</option>`).join("");
 $("fm").onchange = render; $("fa").onchange = render; $("fr").onchange = render;
 
 function render(){
   const m = $("fm").value;
   const fa = norm($("fa").value), fr = ak($("fr").value);
   const RM = {}; RS.forEach(r => RM[String(r.code)] = r);
-  const okR = r => (!fa || norm(r.arm) === fa) && (!fr || ak(r.area) === fr);
+  const okR = r => (!fa || norm(r.arm) === fa) && (!fr || ak(r.store_type) === fr);
   const all = DATA.filter(r => { const x = RM[String(r.code)] || {};
-    return (!m || String(r.month).slice(0, 7) === m) && okR({arm: x.arm || r.arm, area: x.area}); });
+    return (!m || String(r.month).slice(0, 7) === m) && okR({arm: x.arm || r.arm, store_type: r.store_type || x.store_type}); });
   const RSf = RS.filter(okR);
   // ambil laporan terbaru per SA per bulan (SO = akumulasi bulan berjalan)
-  const mp = {};
-  all.forEach(r => { const k = r.code + "|" + r.month; if(!mp[k] || new Date(r.timestamp) > new Date(mp[k].timestamp)) mp[k] = r; });
-  const rows = Object.values(mp);
+  const latest = list => { const mp = {};
+    list.forEach(r => { const k = r.code + "|" + r.month; if(!mp[k] || new Date(r.timestamp) > new Date(mp[k].timestamp)) mp[k] = r; });
+    return Object.values(mp); };
+  const rows = latest(all);
   const xlSO = RSf.reduce((s, r) => s + num(r.so), 0), hasX = xlSO > 0;
   const XS = {}; RS.forEach(r => XS[String(r.code)] = num(r.so));
 
@@ -244,6 +248,17 @@ function render(){
   $("tbb").innerHTML = "<tr><th>Brand</th><th class='n'>Jumlah promotor</th><th class='n'>Jumlah SO</th><th class='n'>Productivity</th><th class='n'>SO vs realme</th></tr>" +
     st.map(s => `<tr><td><b>${s.n}</b>${s.n === "realme" ? " (dari Excel)" : ""}</td><td class="n">${fmt(s.pm)}</td><td class="n">${fmt(s.so)}</td><td class="n">${fmt(s.pd, 1)}</td><td class="n">${rm.so ? fmt(s.so / rm.so * 100, 0) + "%" : "-"}</td></tr>`).join("");
 
+  // ringkasan per kategori / area (mengikuti filter bulan dan ARM, tidak mengikuti filter tipe toko)
+  const allA = DATA.filter(r => { const x = RM[String(r.code)] || {};
+    return (!m || String(r.month).slice(0, 7) === m) && (!fa || norm(x.arm || r.arm) === fa); });
+  const gr = {};
+  const G = a => { const t = STYPES.find(x => ak(x) === ak(a)), k = t ? ak(t) : "-"; return gr[k] || (gr[k] = {k, n: t || "(tanpa tipe)", sa: 0, so: 0, cp: 0, cs: 0}); };
+  RS.filter(r => !fa || norm(r.arm) === fa).forEach(r => { const o = G(r.store_type); o.sa++; o.so += num(r.so); });
+  latest(allA).forEach(r => { const o = G(r.store_type || (RM[String(r.code)] || {}).store_type);
+    BR.slice(1).forEach(([n]) => { o.cp += num(r[key(n) + "_sa"]); o.cs += num(r[key(n) + "_so"]); }); });
+  $("tba").innerHTML = "<tr><th>Tipe Toko</th><th class='n'>SA realme</th><th class='n'>SO realme</th><th class='n'>Productivity realme</th><th class='n'>Promotor kompetitor</th><th class='n'>SO kompetitor</th><th class='n'>Productivity kompetitor</th><th class='n'>Share realme</th></tr>" +
+    Object.values(gr).sort((a, b) => b.so - a.so).map(o => `<tr${fr && o.k === fr ? ' style="background:#fff6d1;color:#111"' : ""}><td><b>${esc(o.n)}</b></td><td class="n">${fmt(o.sa)}</td><td class="n">${fmt(o.so)}</td><td class="n">${o.sa ? fmt(o.so / o.sa, 1) : "-"}</td><td class="n">${fmt(o.cp)}</td><td class="n">${fmt(o.cs)}</td><td class="n">${o.cp ? fmt(o.cs / o.cp, 1) : "-"}</td><td class="n">${o.so + o.cs ? fmt(o.so / (o.so + o.cs) * 100, 0) + "%" : "-"}</td></tr>`).join("");
+
   // per toko
   const sm = {};
   const g = (c, n) => { const k = c || n || "-"; return sm[k] || (sm[k] = {name: n || c || "-", rm: 0, b: {}}); };
@@ -258,13 +273,13 @@ function render(){
         `<td class="n">${tot ? fmt(o.rm / tot * 100, 0) + "%" : "-"}</td></tr>`; }).join("");
 
   const cell = (r, n) => `${r[key(n) + "_sa"]} / ${r[key(n) + "_so"]}`;
-  const head = ["Tanggal", "Bulan", "ARM/FT", "SA", "Kode", "Store Code", "Toko"];
+  const head = ["Tanggal", "Bulan", "ARM/FT", "SA", "Kode", "Store Code", "Toko", "Tipe Toko"];
   $("tb").innerHTML = "<tr>" + head.concat(["realme SO (Excel)"], BR.slice(1).map(([n]) => n + " (Prom/SO)")).map(x => `<th>${x}</th>`).join("") + "</tr>" +
-    all.map(r => "<tr>" + [String(r.day).slice(0, 10), String(r.month).slice(0, 7), r.arm, r.sa, r.code, r.store_code, r.store, fmt(XS[String(r.code)] || 0), ...BR.slice(1).map(([n]) => cell(r, n))]
+    all.map(r => "<tr>" + [String(r.day).slice(0, 10), String(r.month).slice(0, 7), r.arm, r.sa, r.code, r.store_code, r.store, r.store_type || (RM[String(r.code)] || {}).store_type || "", fmt(XS[String(r.code)] || 0), ...BR.slice(1).map(([n]) => cell(r, n))]
       .map(x => `<td>${esc(x)}</td>`).join("") + "</tr>").join("");
   $("csv").onclick = () => {
     const h = [...head, "realme SO (Excel)", ...BR.slice(1).flatMap(([n]) => [n + " Promotor", n + " SO"])];
-    const t = [h, ...all.map(r => [String(r.day).slice(0, 10), String(r.month).slice(0, 7), r.arm, r.sa, r.code, r.store_code, r.store, XS[String(r.code)] || 0, ...BR.slice(1).flatMap(([n]) => [r[key(n) + "_sa"], r[key(n) + "_so"]])])]
+    const t = [h, ...all.map(r => [String(r.day).slice(0, 10), String(r.month).slice(0, 7), r.arm, r.sa, r.code, r.store_code, r.store, r.store_type || (RM[String(r.code)] || {}).store_type || "", XS[String(r.code)] || 0, ...BR.slice(1).flatMap(([n]) => [r[key(n) + "_sa"], r[key(n) + "_so"]])])]
       .map(a => a.map(x => `"${String(x).replace(/"/g, '""')}"`).join(",")).join("\n");
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([t], {type: "text/csv"}));
     a.download = "rekap-kompetitor.csv"; a.click();
@@ -272,28 +287,54 @@ function render(){
 }
 
 /* ---------- UPLOAD EXCEL SO realme ---------- */
-const pick = (row, test) => { for(const k in row){ if(test(k.toLowerCase().replace(/[^a-z0-9]/g, ""))) return row[k]; } return ""; };
+const hk = s => String(s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const STKEYS = new Set(STYPES.map(ak)), ARMKEYS = new Set(ARMS.map(ak));
+const findCol = (hs, test) => hs.find(h => test(hk(h))) || "";
+const byValue = (js, hs, keys) => { let bk = "", bc = 0;   // kolom yang isinya paling banyak cocok dengan daftar
+  hs.forEach(h => { const c = js.filter(r => keys.has(ak(r[h]))).length; if(c > bc){ bc = c; bk = h; } }); return bk; };
+function readXlsx(wb){   // cari baris header otomatis di semua sheet
+  let best = null;
+  for(const nm of wb.SheetNames){
+    const a = XLSX.utils.sheet_to_json(wb.Sheets[nm], {header: 1, defval: ""});
+    const hi = a.slice(0, 20).findIndex(r => r.some(c => { const n = hk(c); return n.includes("saname") || n.includes("personalcode"); }));
+    if(hi < 0) continue;
+    const hs = a[hi].map((h, i) => String(h) || "kolom" + i);
+    const data = a.slice(hi + 1).map(r => Object.fromEntries(hs.map((h, i) => [h, r[i]])));
+    if(!best || data.length > best.js.length) best = {js: data, hs};
+  }
+  if(best) return best;
+  const js = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: ""});
+  return {js, hs: Object.keys(js[0] || {})};
+}
 $("up").onclick = async () => {
   const f = $("xl").files[0];
   if(!f) return say("umsg", "Pilih file Excel dulu.", 1);
   try{
-    const wb = XLSX.read(await f.arrayBuffer());
-    const js = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: ""});
-    const rows = js.map(r => ({
-      arm: String(pick(r, n => n.includes("arm") || n.includes("ftname") || n === "ft")).trim(),
-      sa: String(pick(r, n => n.includes("saname") || n === "nama")).trim(),
-      code: String(pick(r, n => n.includes("personalcode") || n === "sacode")).trim(),
-      store_code: String(pick(r, n => n.includes("storecode"))).trim(),
-      store: String(pick(r, n => n.includes("storename"))).trim(),
-      area: String(pick(r, n => n.includes("area") || n.includes("kategori") || n.includes("category") || n.includes("region"))).trim(),
-      so: num(String(pick(r, n => n === "so" || n.includes("achiev") || n.includes("sellout") || n.includes("totalso"))).replace(/[^0-9.-]/g, ""))
-    })).filter(r => r.code || r.sa);
-    if(!rows.length) return say("umsg", "Kolom tidak terbaca. Cek nama header di Excel.", 1);
+    const {js, hs} = readXlsx(XLSX.read(await f.arrayBuffer()));
+    const cArm = byValue(js, hs, ARMKEYS) || findCol(hs, n => n.includes("arm") || n.includes("ftname") || n === "ft");
+    const cType = byValue(js, hs, STKEYS) || findCol(hs, n => n.includes("storetype") || n.includes("tipetoko") || n.includes("tipe") || n.includes("channel") || n === "type");
+    const cSa = findCol(hs, n => n.includes("saname") || n === "nama"), cCode = findCol(hs, n => n.includes("personalcode") || n === "sacode"),
+      cSc = findCol(hs, n => n.includes("storecode")), cSn = findCol(hs, n => n.includes("storename")),
+      cSo = findCol(hs, n => n === "so" || n.includes("achiev") || n.includes("sellout") || n.includes("totalso"));
+    const t = (r, c) => c ? String(r[c] ?? "").trim() : "";
+    let la = "";   // isi otomatis sel ARM yang di-merge (kosong)
+    const rows = js.map(r => {
+      if(t(r, cArm)) la = t(r, cArm);
+      return {arm: la, sa: t(r, cSa), code: t(r, cCode), store_code: t(r, cSc), store: t(r, cSn), store_type: t(r, cType),
+        so: num(t(r, cSo).replace(/[^0-9.-]/g, ""))};
+    }).filter(r => r.code || r.sa);
+    if(!rows.length) return say("umsg", "Kolom tidak terbaca. Header yang terbaca: " + hs.slice(0, 12).join(", "), 1);
     say("umsg", "Mengunggah " + rows.length + " baris...");
     const r = await fetch(API_URL, {method: "POST", body: JSON.stringify({action: "roster", key: $("pin").value, rows})});
     const j = await r.json();
     if(j.error) return say("umsg", "Gagal: kode akses salah.", 1);
-    say("umsg", j.n + " SA berhasil diperbarui."); $("load").click();
+    const wa = rows.filter(x => x.store_type).length, ma = rows.filter(x => STKEYS.has(ak(x.store_type))).length, wr = rows.filter(x => x.arm).length;
+    await $("load").onclick();
+    let msg = `${j.n} SA diperbarui. Tipe toko terbaca: ${wa} baris (cocok dengan TRADI / REALME STORE / MODERN CHANNEL: ${ma}). ARM terbaca: ${wr} baris.`, bad = 0;
+    if(!wa){ msg += " Kolom STORE TYPE tidak ditemukan di Excel. Header yang terbaca: " + hs.slice(0, 12).join(", "); bad = 1; }
+    else if(!RS.some(x => x.store_type)){ msg += " Tipe toko terbaca tapi tidak tersimpan: kode Apps Script belum versi terbaru. Tempel apps-script.gs yang baru lalu Deploy New version."; bad = 1; }
+    else if(ma < wa) msg += " Ada tipe toko yang ejaannya tidak sama dengan tiga pilihan, jadi tidak ikut terfilter. Perbaiki ejaan di Excel lalu upload ulang.";
+    say("umsg", msg, bad);
   }catch(e){ say("umsg", "Gagal membaca atau mengunggah file.", 1); }
 };
 </script>
